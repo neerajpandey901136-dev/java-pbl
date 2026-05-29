@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Expense Tracker - Login</title>
+    <meta name="description" content="AI powered smart expense tracker using SMS">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="glass auth-card">
+            <h1 style="text-align: center; margin-bottom: 0.5rem;">Expense<span style="color: var(--primary);">AI</span></h1>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 1.5rem;">Smart tracking from your SMS</p>
+            
+            <!-- Auth Tab Toggle -->
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+                <button type="button" id="tabLogin" class="btn" style="flex: 1; background: var(--surface); padding: 0.5rem 0.25rem; font-size: 0.875rem;" onclick="setMode('login')">Login</button>
+                <button type="button" id="tabSignup" class="btn" style="flex: 1; background: transparent; padding: 0.5rem 0.25rem; font-size: 0.875rem; color: var(--text-muted);" onclick="setMode('signup')">Sign Up</button>
+            </div>
+
+            <!-- Login / Signup Form -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" class="form-control" required placeholder="Enter username">
+                </div>
+                <div class="form-group" id="emailGroup" style="display: none;">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" class="form-control" placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-control" required placeholder="••••••••">
+                </div>
+                <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%;">Enter Dashboard</button>
+            </form>
+
+            <div id="authMessage" style="margin-top: 1rem; font-size: 0.875rem; text-align: center;"></div>
+
+            <div style="text-align: center; margin-top: 1.5rem; font-size: 0.75rem;" id="backendStatus">
+                Checking backend status...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if already logged in
+        if (localStorage.getItem('userId')) {
+            window.location.href = 'dashboard.html';
+        }
+
+        const API_BASE_URL = 'http://localhost:8080/api';
+        let currentMode = 'login';
+
+        function setMode(mode) {
+            currentMode = mode;
+            const tabLogin = document.getElementById('tabLogin');
+            const tabSignup = document.getElementById('tabSignup');
+            const emailGroup = document.getElementById('emailGroup');
+            const emailInput = document.getElementById('email');
+            const submitBtn = document.getElementById('submitBtn');
+            const authMessage = document.getElementById('authMessage');
+
+            authMessage.innerText = '';
+
+            if (mode === 'login') {
+                tabLogin.style.background = 'var(--surface)';
+                tabLogin.style.color = 'var(--text)';
+                tabSignup.style.background = 'transparent';
+                tabSignup.style.color = 'var(--text-muted)';
+                emailGroup.style.display = 'none';
+                emailInput.removeAttribute('required');
+                submitBtn.innerText = 'Enter Dashboard';
+            } else {
+                tabSignup.style.background = 'var(--surface)';
+                tabSignup.style.color = 'var(--text)';
+                tabLogin.style.background = 'transparent';
+                tabLogin.style.color = 'var(--text-muted)';
+                emailGroup.style.display = 'block';
+                emailInput.setAttribute('required', 'required');
+                submitBtn.innerText = 'Create Account';
+            }
+        }
+
+        // Check backend status on load
+        function checkBackend() {
+            const statusDiv = document.getElementById('backendStatus');
+            fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            })
+            .then(() => {
+                statusDiv.innerHTML = '<span style="color: var(--secondary);">● Backend Connected</span>';
+            })
+            .catch(() => {
+                statusDiv.innerHTML = '<span style="color: var(--danger); font-weight: 500;">● Backend Offline (Start Spring Boot on 8080)</span>';
+            });
+        }
+        checkBackend();
+
+        const form = document.getElementById('loginForm');
+        const authMessage = document.getElementById('authMessage');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            authMessage.innerText = '';
+            authMessage.style.color = 'var(--text-muted)';
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (currentMode === 'login') {
+                authMessage.innerText = 'Logging in...';
+                try {
+                    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        localStorage.setItem('userId', data.userId);
+                        localStorage.setItem('username', data.username);
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        authMessage.innerText = data.message || 'Invalid credentials';
+                        authMessage.style.color = 'var(--danger)';
+                    }
+                } catch (error) {
+                    authMessage.innerText = 'Connection to server failed.';
+                    authMessage.style.color = 'var(--danger)';
+                }
+            } else {
+                const email = document.getElementById('email').value;
+                authMessage.innerText = 'Registering account...';
+                try {
+                    const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password, email })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        authMessage.innerText = 'Registration successful! Logging in...';
+                        authMessage.style.color = 'var(--secondary)';
+                        // Auto login
+                        const loginRes = await fetch(`${API_BASE_URL}/auth/login`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username, password })
+                        });
+                        const loginData = await loginRes.json();
+                        if (loginRes.ok) {
+                            localStorage.setItem('userId', loginData.userId);
+                            localStorage.setItem('username', loginData.username);
+                            setTimeout(() => {
+                                window.location.href = 'dashboard.html';
+                            }, 800);
+                        }
+                    } else {
+                        authMessage.innerText = data.message || 'Registration failed';
+                        authMessage.style.color = 'var(--danger)';
+                    }
+                } catch (error) {
+                    authMessage.innerText = 'Connection to server failed.';
+                    authMessage.style.color = 'var(--danger)';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

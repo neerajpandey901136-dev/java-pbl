@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ExpenseAI</title>
+    <meta name="description" content="Dashboard for your personal expenses">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="topbar">
+            <h2>Expense<span style="color: var(--primary);">AI</span></h2>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <span id="userNameDisplay" class="text-muted">Welcome, User</span>
+                <button class="btn btn-secondary" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <div class="summary-cards">
+            <div class="glass card">
+                <div class="card-title">Total Balance</div>
+                <div class="card-value" id="totalBalance">₹0.00</div>
+            </div>
+            <div class="glass card">
+                <div class="card-title">Total Income</div>
+                <div class="card-value text-success" id="totalIncome">₹0.00</div>
+            </div>
+            <div class="glass card">
+                <div class="card-title">Total Expense</div>
+                <div class="card-value text-danger" id="totalExpense">₹0.00</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                <!-- SMS Simulator Panel -->
+                <div class="glass sms-panel">
+                    <h3>Simulate SMS Auto-Read</h3>
+                    <p class="text-muted" style="margin-bottom: 1rem; font-size: 0.875rem;">
+                        Paste a bank SMS here to test the regex extraction engine.
+                    </p>
+                    <textarea id="smsInput" class="form-control" placeholder="E.g. Rs.500 debited from your account at Amazon on 25-Apr"></textarea>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="simulateSMS()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        Parse SMS
+                    </button>
+                    <div id="smsStatus" style="margin-top: 1rem; font-size: 0.875rem; color: var(--secondary);"></div>
+                </div>
+
+                <!-- Charts -->
+                <div class="glass card" style="padding: 1.5rem;">
+                    <h3>Expense by Category</h3>
+                    <div style="height: 250px; margin-top: 1rem;">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="glass card" style="padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>Recent Transactions</h3>
+                    <button class="btn btn-primary" onclick="openAddModal()">+ Add Manual</button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Merchant</th>
+                                <th>Category</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Transaction Modal -->
+    <div class="modal" id="addModal">
+        <div class="glass modal-content">
+            <div class="modal-header">
+                <h3>Add Transaction</h3>
+                <button class="close-btn" onclick="closeAddModal()">&times;</button>
+            </div>
+            <form id="addTxForm">
+                <div class="form-group">
+                    <label>Amount (₹)</label>
+                    <input type="number" id="txAmount" class="form-control" required min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="txType" class="form-control" required>
+                        <option value="DEBIT">Expense (Debit)</option>
+                        <option value="CREDIT">Income (Credit)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <input type="text" id="txCategory" class="form-control" required placeholder="e.g. Food, Salary">
+                </div>
+                <div class="form-group">
+                    <label>Merchant / Source</label>
+                    <input type="text" id="txMerchant" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Save Transaction</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/dashboard.js?v=5"></script>
+</body>
+</html>
